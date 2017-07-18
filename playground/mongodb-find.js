@@ -35,11 +35,7 @@ db.collection('Users').find({name: 'Avi Tillu'}).toArray().then(function(docs){
     console.log('Unable to fetch users with name')
 })*/
     
-db.collection('Users').insertOne({
-    name: 'Avi Tillu',
-    age: 27
-}).then(function(result){
-    console.log(result)
+
 });
 
 
