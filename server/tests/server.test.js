@@ -45,16 +45,16 @@ describe('POST /todos', function(){
         .post('/todos')
         .send({})
         .expect(400)
-        .end(function(err, res){
-            if (err) {
-                return done(err)
+        .end(function(failure, res){
+            if (failure) {
+                return done(failure)
             }
             
-            Todo.find().then(function(todos){
-                expect(todos.length).toBe(0)
+            Todo.find().then(function(docs){
+                expect(docs.length).toBe(0)
                 done()
-            }).catch(function(err){
-                done(err)
+            }).catch(function(failure){
+                done(failure)
             })
         })
         
