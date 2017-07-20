@@ -28,7 +28,7 @@ app.get('/todos', function(req, res){
       res.send({docs})
   }, function(error){
       res.send(error)
-  })  
+  });  
 });
 
 

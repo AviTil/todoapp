@@ -5,8 +5,15 @@ const app = require('./../server.js').app
 const Todo = require('./../models/todo.js').Todo
 
 
+var dummyTodos = [
+    {text: 'first chore'},
+    {text: 'second chore'}
+    ]
+
 beforeEach(function(done){
     Todo.remove({}).then(function(){
+        return Todo.insertMany(dummyTodos);
+    }).then(function(){
         done()
     })
 })
@@ -28,7 +35,7 @@ describe('POST /todos', function(){
                 return done(err)
             }
             
-            Todo.find().then(function(todos){
+            Todo.find({text: text}).then(function(todos){
                 expect(todos.length).toBe(1)
                 expect(todos[0].text).toBe(text);
                 done();
@@ -51,7 +58,7 @@ describe('POST /todos', function(){
             }
             
             Todo.find().then(function(docs){
-                expect(docs.length).toBe(0)
+                expect(docs.length).toBe(2)
                 done()
             }).catch(function(failure){
                 done(failure)
@@ -60,4 +67,16 @@ describe('POST /todos', function(){
         
     })
     
-}) 
+})
+
+describe('GET /todos', function(){
+    it('should get all todos', function(done){
+        request(app)
+        .get('/todos')
+        .expect(200)
+        .expect(function(res){
+            expect(res.body.docs.length).toBe(2)
+        })
+        .end(done)
+    })
+})
