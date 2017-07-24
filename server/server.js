@@ -32,7 +32,7 @@ app.get('/todos', function(req, res){
   });  
 });
 
-// GET /todos/123422
+
 
 app.get('/todos/:id', function(req, res){
     var id = req.params.id
@@ -45,7 +45,7 @@ app.get('/todos/:id', function(req, res){
         
         Todo.findById(id).then(function(doc){
             if (doc) {
-                res.send(JSON.stringify(doc, undefined,2))
+                res.send(doc)
             } else {
                 res.status(404).send()
             }
