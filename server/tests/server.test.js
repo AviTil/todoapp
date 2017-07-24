@@ -8,7 +8,7 @@ const Todo = require('./../models/todo.js').Todo
 
 var dummyTodos = [
     {_id: new ObjectID(), text: 'first chore'},
-    {_id: new ObjectID(), text: 'second chore'}
+    {_id: new ObjectID(), text: 'second chore', completed: true, completedAt: 333}
     ]
 
 beforeEach(function(done){
@@ -167,4 +167,50 @@ describe('DELETE /todos/:id', function(){
         .end(done)
     })
    
+})
+
+
+describe('PATCH /todos/:id', function(){
+    
+    it('should update the todo', function(done){
+        
+        var id = dummyTodos[0]._id.toHexString()
+        var text = "eat grapes"
+        
+        
+        request(app)
+        .patch('/todos/'+id)
+        .send({
+            completed: true,
+            text: text
+        })
+        .expect(200)
+        .expect(function(res){
+            expect(res.body.text).toBe(text)
+            expect(res.body.completed).toBe(true)
+            expect(res.body.completedAt).toBeA('number')
+        })
+        .end(done)
+        
+    })
+    
+    
+    it('should clear completedAt when todo is set to not complete', function(done){
+      
+        var id = dummyTodos[1]._id.toHexString()
+        
+        request(app)
+        .patch('/todos/'+id)
+        .send({
+            completed: false
+        })
+        .expect(200)
+        .expect(function(doc){
+            expect(doc.body.completed).toBe(false)
+            expect(doc.body.completedAt).toNotExist
+        })
+        .end(done)
+    
+    })
+    
 })
