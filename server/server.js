@@ -59,6 +59,25 @@ app.get('/todos/:id', function(req, res){
   
 })
 
+app.delete('/todos/:id', function(req, res){
+    var id = req.params.id
+    
+    if (!ObjectID.isValid(id)){
+        return res.status(404).send()
+    } 
+    
+    Todo.findByIdAndRemove(id).then(function(doc){
+        if (doc){
+            res.status(200).send(doc)
+        } else {
+            res.status(404).send()
+        }
+    }).catch(function(e){
+        res.status(400).send()
+    })
+    
+})
+
 
 
 

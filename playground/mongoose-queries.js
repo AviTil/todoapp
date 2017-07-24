@@ -18,6 +18,8 @@ Todo.find({
     console.log('Todos: '+docs)
 });
 
+// finding the first document where a property equals a set value
+
 Todo.findOne({
     _id: id
 }).then(function(doc){
