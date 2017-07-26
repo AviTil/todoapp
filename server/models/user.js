@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 var validator = require('validator');
 const jwt = require('jsonwebtoken')
 const _ = require('lodash');
+const bcrypt = require('bcryptjs')
 
 
 var UserSchema = new mongoose.Schema({
@@ -46,9 +47,18 @@ UserSchema.methods.toJSON = function(){
 }
 
 UserSchema.methods.generateAuthToken = function(){
+    
+    // code that creates token property of tokens
+    
     var user = this;
     var access = 'auth';
-    var token = jwt.sign({_id: user._id.toHexString(), access: access}, 'abc123').toString()
+    var token = jwt.sign({
+        _id: user._id.toHexString(), 
+        access: access
+        }, 
+        'abc123').toString()
+    
+    // code that adds tokens to a user object
     
     user.tokens.push({access: access, token: token})
     
@@ -57,6 +67,45 @@ UserSchema.methods.generateAuthToken = function(){
     })
     
 }
+
+UserSchema.statics.findByToken = function(token){
+    var User = this
+    var decoded;
+    
+    try {
+        decoded = jwt.verify(token, 'abc123')
+    } catch(e){
+        return Promise.reject()
+    }
+    
+    return User.findOne({
+        _id: decoded._id,
+        'tokens.token': token,
+        'tokens.access': 'auth'
+    })
+}
+
+UserSchema.pre('save', function(next){
+    var user = this;
+    if (user.isModified('password')){
+        
+        var newPassword = user.password
+        
+        bcrypt.genSalt(10, function(err, salt){
+            
+            bcrypt.hash(newPassword, salt, function(err, hash){
+                
+                user.password = hash
+                next()
+            })
+        })
+        
+    } else {
+        
+    }
+    
+})
+
 
 var User = mongoose.model('User', UserSchema);
 

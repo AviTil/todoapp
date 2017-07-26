@@ -8,6 +8,7 @@ var ObjectID = require('mongodb').ObjectID
 var mongoose = require('./db/mongoose').mongoose
 var Todo = require('./models/todo').Todo
 var User = require('./models/user').User
+var authenticate = require('./middleware/authenticate.js').authenticate
 
 var app = express();
 const port = process.env.PORT
@@ -126,12 +127,20 @@ app.post('/users', function(req, res){
     user.save().then(function(user){
         return user.generateAuthToken()
     }).then(function(token){
+        
+        // token property value of tokens object is sent back to the client in the header
+        
         res.header('x-auth', token).send(user);   
     }).catch(function(e){
         res.status(400).send(e)
     })  
 });
 
+
+app.get('/users/me', authenticate, function(req, res){
+  res.send(req.user)
+    
+})
 
 
 
