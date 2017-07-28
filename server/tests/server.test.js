@@ -20,6 +20,7 @@ describe('POST /todos', function(){
         
         request(app)
         .post('/todos')
+        .set('x-auth', users[0].tokens[0].token)
         .send({text})
         .expect(200)
         .expect(function(res){
@@ -45,6 +46,7 @@ describe('POST /todos', function(){
         
         request(app)
         .post('/todos')
+        .set('x-auth', users[0].tokens[0].token)
         .send({})
         .expect(400)
         .end(function(failure, res){
@@ -68,9 +70,10 @@ describe('GET /todos', function(){
     it('should get all todos', function(done){
         request(app)
         .get('/todos')
+        .set('x-auth', users[0].tokens[0].token)
         .expect(200)
         .expect(function(res){
-            expect(res.body.docs.length).toBe(2)
+            expect(res.body.docs.length).toBe(1)
         })
         .end(done)
     })
@@ -84,6 +87,7 @@ describe('GET /todos/:id', function(){
         
         request(app)
         .get('/todos/'+id)
+        .set('x-auth', users[0].tokens[0].token)
         .expect(200)
         .expect(function(res){
             expect(res.body.text).toBe(dummyTodos[0].text)
@@ -92,12 +96,27 @@ describe('GET /todos/:id', function(){
         
     })
     
+    
+    it('should not return a todo created by another user', function(done){
+        
+        var id = dummyTodos[1]._id.toHexString();
+        
+        request(app)
+        .get('/todos/'+id)
+        .set('x-auth', users[0].tokens[0].token)
+        .expect(404)
+        .end(done)
+        
+    })
+    
+    
     it('should return a 404 if todo not found', function(done){
         
         var emptyID = new ObjectID().toHexString()
         
         request(app)
         .get('/todos/'+emptyID)
+        .set('x-auth', users[0].tokens[0].token)
         .expect(404)
         .end(done)
     })
@@ -106,6 +125,7 @@ describe('GET /todos/:id', function(){
     it('should return 404 if id invalid', function(done){
         request(app)
         .get('/todos/123')
+        .set('x-auth', users[0].tokens[0].token)
         .expect(404)
         .end(done)
     })
@@ -121,6 +141,7 @@ describe('DELETE /todos/:id', function(){
         
         request(app)
         .delete('/todos/'+hexId)
+        .set('x-auth', users[0].tokens[0].token)
         .expect(200)
         .expect(function(res){
             expect(res.body._id).toBe(hexId)
@@ -142,12 +163,39 @@ describe('DELETE /todos/:id', function(){
     })
     
     
+     it('should not remove a todo not owned', function(done){
+        
+        var hexId = dummyTodos[1]._id.toHexString();
+        
+        request(app)
+        .delete('/todos/'+hexId)
+        .set('x-auth', users[0].tokens[0].token)
+        .expect(404)
+        .end(function(e, res){
+            if (e){
+                return done(e)
+            }
+            
+            Todo.findById(hexId).then(function(doc){
+                expect(doc).toExist()
+                done()
+            }).catch(function(e){
+                done(e)
+            })
+            
+        })
+        
+    })
+    
+    
+    
     it('should return 404 if todo not found', function(done){ 
         
         var newID = new ObjectID().toHexString();
         
         request(app)
         .delete('/todos/'+newID)
+        .set('x-auth', users[0].tokens[0].token)
         .expect(404)
         .end(done)
     })
@@ -157,6 +205,7 @@ describe('DELETE /todos/:id', function(){
       
         request(app)
         .delete('/todos/12345')
+        .set('x-auth', users[0].tokens[0].token)
         .expect(404)
         .end(done)
     })
@@ -174,6 +223,7 @@ describe('PATCH /todos/:id', function(){
         
         request(app)
         .patch('/todos/'+id)
+        .set('x-auth', users[0].tokens[0].token)
         .send({
             completed: true,
             text: text
@@ -189,19 +239,41 @@ describe('PATCH /todos/:id', function(){
     })
     
     
-    it('should clear completedAt when todo is set to not complete', function(done){
-      
-        var id = dummyTodos[1]._id.toHexString()
+      it('should not update the todo if not owned', function(done){
+        
+        var id = dummyTodos[0]._id.toHexString()
+        var text = "eat grapes"
+        
         
         request(app)
         .patch('/todos/'+id)
+        .set('x-auth', users[1].tokens[0].token)
+        .send({
+            completed: true,
+            text: text
+        })
+        .expect(404)
+        .end(done)
+        
+    })
+    
+    
+    
+    
+    it('should clear completedAt when todo is set to not complete', function(done){
+      
+        var id = dummyTodos[0]._id.toHexString()
+        
+        request(app)
+        .patch('/todos/'+id)
+        .set('x-auth', users[0].tokens[0].token)
         .send({
             completed: false
         })
         .expect(200)
         .expect(function(doc){
             expect(doc.body.completed).toBe(false)
-            expect(doc.body.completedAt).toNotExist
+            expect(doc.body.completedAt).toNotExist()
         })
         .end(done)
     

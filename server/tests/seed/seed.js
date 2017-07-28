@@ -20,14 +20,18 @@ const users = [{
 }, {
     _id: userTwoId,
     email: 'example123456@example.com',
-    password: 'example123456'
+    password: 'example123456',
+    tokens: [{
+        access: 'auth',
+        token: jwt.sign({_id: userTwoId, access: 'auth'}, 'abc123').toString()
+    }]
 }]
 
 
 
 var dummyTodos = [
-    {_id: new ObjectID(), text: 'first chore'},
-    {_id: new ObjectID(), text: 'second chore', completed: true, completedAt: 333}
+    {_id: new ObjectID(), text: 'first chore', _user: userOneId},
+    {_id: new ObjectID(), text: 'second chore', completed: true, completedAt: 333, _user: userTwoId}
     ]
 
 var populateTodos = function(done){

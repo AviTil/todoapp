@@ -16,9 +16,13 @@ const port = process.env.PORT
 
 app.use(bodyParser.json());
 
-app.post('/todos', function(req, res){
+app.post('/todos', authenticate, function(req, res){
     var todo = new Todo({
-        text: req.body.text
+        text: req.body.text,
+        
+        // since we call authenticate method, we have to pass an x-auth in the header, and authenticate converts x-auth into user via User.findByToken. In authenticate, req.user is set to the return result of User.findByT
+        
+        _user: req.user._id
     });
     
     todo.save().then(function(doc){
@@ -30,8 +34,10 @@ app.post('/todos', function(req, res){
 });
 
 
-app.get('/todos', function(req, res){
-  Todo.find().then(function(docs){
+app.get('/todos', authenticate, function(req, res){
+  Todo.find({
+      _user: req.user._id
+  }).then(function(docs){
       res.send({docs: docs})
   }, function(error){
       res.send(error)
@@ -40,7 +46,7 @@ app.get('/todos', function(req, res){
 
 
 
-app.get('/todos/:id', function(req, res){
+app.get('/todos/:id', authenticate, function(req, res){
     var id = req.params.id
         
     if (!ObjectID.isValid(id)){
@@ -49,7 +55,10 @@ app.get('/todos/:id', function(req, res){
     
     } else {
         
-        Todo.findById(id).then(function(doc){
+        Todo.findOne({
+            _id: id,
+            _user: req.user._id}).then(function(doc){
+            
             if (doc) {
                 res.send(doc)
             } else {
@@ -63,14 +72,16 @@ app.get('/todos/:id', function(req, res){
   
 })
 
-app.delete('/todos/:id', function(req, res){
+app.delete('/todos/:id', authenticate, function(req, res){
     var id = req.params.id
     
     if (!ObjectID.isValid(id)){
         return res.status(404).send()
     } 
     
-    Todo.findByIdAndRemove(id).then(function(doc){
+    Todo.findOneAndRemove({
+        _id: id,
+        _user: req.user._id}).then(function(doc){
         if (doc){
             res.status(200).send(doc)
         } else {
@@ -82,7 +93,7 @@ app.delete('/todos/:id', function(req, res){
     
 })
 
-app.patch('/todos/:id', function(req, res){
+app.patch('/todos/:id', authenticate, function(req, res){
     
     var id = req.params.id
     var body = _.pick(req.body, ['text', 'completed'])
@@ -98,7 +109,10 @@ app.patch('/todos/:id', function(req, res){
         body.completedAt = null
     }
     
-    Todo.findByIdAndUpdate(id, {
+    Todo.findOneAndUpdate({
+        _id: id,
+        _user: req.user._id},
+        {
         $set: body
     }, {
         new: true
