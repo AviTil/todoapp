@@ -124,7 +124,8 @@ app.post('/users', function(req, res){
         password: body.password
     })
     
-    user.save().then(function(user){
+    user.save().then(function(){
+        
         return user.generateAuthToken()
     }).then(function(token){
         
@@ -142,7 +143,19 @@ app.get('/users/me', authenticate, function(req, res){
     
 })
 
-
+app.post('/users/login', function(req, res){
+    
+    var body = _.pick(req.body,['email', 'password'])
+    
+    User.findByCredentials(body.email, body.password).then(function(user){
+        return user.generateAuthToken().then(function(token){
+            res.header('x-auth', token).send(user)
+        })
+    }).catch(function(e){
+        res.status(400).send("wrong password");
+    })
+    
+})
 
 
 app.listen(port, function(){
